@@ -1,0 +1,194 @@
+#!/bin/sh
+
+CURRENT_DIR=$PWD
+BRANCH_VERSION=19.1
+
+print_help() {
+	echo ""
+	echo "FreeRADIUS Plugin build:"
+	echo ""
+	echo "commands:"
+	echo "	help:			print commands help"
+	echo "	upgrade_fr:		upgrade FreeRADIUS plugin"
+	echo "	upgrade_cp:		upgrade CaptivePortal module"
+	echo "	core:		 	build and package FreeRADIUS plugin"
+	echo "	plugins:	 	build and package core repository"
+	echo "	dvd:	 	 	build iso image"
+	echo "	vga:	 	 	build vga image"
+	echo ""
+}
+
+reset_core() {
+	cd /usr/core
+
+	git fetch origin
+	for branch in "master" "stable/$BRANCH_VERSION"; do
+		git checkout -f $branch
+		rm -rf src/opnsense/*
+		git reset --hard origin/$branch
+	done
+}
+
+reset_plugins() {
+	cd /usr/plugins
+
+	git fetch origin
+	for branch in "master" "stable/$BRANCH_VERSION"; do
+	    git checkout -f $branch
+	    git reset --hard origin/$branch
+	done	
+}
+
+reset_tools() {
+	cd /usr/tools
+
+	git fetch origin
+	git checkout -f master
+	git reset --hard origin/master
+}
+
+upgrade_captiveportal() {
+	for branch in "master" "stable/$BRANCH_VERSION"; do
+		cd /usr/core 
+		git checkout -f $branch
+
+		cd /usr/core/src/opnsense/mvc/app/controllers/OPNsense/CaptivePortal/Api/
+		cp $CURRENT_DIR/captiveportal/src/opnsense/mvc/app/controllers/OPNsense/CaptivePortal/Api/RadiusController.php .
+		cp $CURRENT_DIR/captiveportal/src/opnsense/mvc/app/controllers/OPNsense/CaptivePortal/Api/BandwidthController.php .		
+
+		cd /usr/core/src/opnsense/mvc/app/views/OPNsense/CaptivePortal/
+		diff -u clients.volt $CURRENT_DIR/captiveportal/src/opnsense/mvc/app/views/OPNsense/CaptivePortal/clients.volt > clients.patch
+		patch < clients.patch
+
+		cd /usr/core/src/opnsense/scripts/OPNsense/CaptivePortal/
+		diff -u cp-background-process.py $CURRENT_DIR/captiveportal/src/opnsense/scripts/OPNsense/CaptivePortal/cp-background-process.py > cp-background-process.patch
+		patch < cp-background-process.patch
+
+		cd /usr/core/src/opnsense/scripts/OPNsense/CaptivePortal/htdocs_default/
+		diff -u index.html $CURRENT_DIR/captiveportal/src/opnsense/scripts/OPNsense/CaptivePortal/htdocs_default/index.html > index.patch
+		patch < index.patch	
+ 
+		cd /usr/core/src/opnsense/mvc/app/views/OPNsense/TrafficShaper/
+		diff -u index.volt $CURRENT_DIR/trafficshaper/src/opnsense/mvc/app/views/OPNsense/TrafficShaper/index.volt > index.patch
+		patch < index.patch		
+
+		# this will patch all changes inside a directory
+		# cd /usr/core/src/opnsense/scripts/OPNsense/CaptivePortal/htdocs_default
+		# diff -crB $PWD/ $CURRENT_DIR/captiveportal/src/opnsense/scripts/OPNsense/CaptivePortal/htdocs_default > htdocs_default.patch
+		# patch -p0 < htdocs_default.patch
+
+		cd /usr/core
+		make plist-fix
+
+		git add .			
+		git commit -am "update captiveportal"	
+	done
+
+	make upgrade 	
+	/usr/local/etc/rc.d/captiveportal restart
+}
+
+upgrade_freeradius() {
+	for branch in "master" "stable/$BRANCH_VERSION"; do
+		cd /usr/plugins
+	    git checkout -f $branch
+
+	    rm -rf net/freeradius-captiveportal
+	    cp -pr $CURRENT_DIR/freeradius net/freeradius-captiveportal
+
+	    git add .
+	    git commit -am "add freeradius-captiveportal plugin"
+	done
+	
+	cd net/freeradius-captiveportal
+	make upgrade
+
+	cp -pf /usr/plugins/net/freeradius-captiveportal/src/opnsense/service/templates/OPNsense/Freeradius/rc-radiusd /usr/local/etc/rc.d/radiusd
+	chmod +x /usr/local/etc/rc.d/radiusd
+	/usr/local/etc/rc.d/radiusd restart
+}
+
+build_core() {
+	upgrade_captiveportal
+
+	cd /usr/tools
+	make clean-core
+	make core
+}
+
+build_plugins() {	
+	upgrade_freeradius
+
+	cd /usr/tools
+	echo "net/freeradius-captiveportal                              arm" >> config/$BRANCH_VERSION/plugins.conf
+
+	make clean-plugins	
+	make plugins
+
+	mkdir -p /usr/build/opnsense/plugins && cp -f /usr/obj/usr/tools/config/$BRANCH_VERSION/OpenSSL:amd64/.pkg-new/Latest/os-freeradius-captiveportal-*.txz /usr/build/opnsense/plugins/
+	echo
+	echo ">>> Saved into /usr/build/opnsense/plugins/"
+}
+
+build_dvd() {
+	cd /usr/tools
+
+	make clean-dvd
+	make dvd
+	make dvd # this duplicate line for printing purposes (DO NOT REMOVE IT)
+
+	mkdir -p /usr/build/opnsense/images && cp -f /usr/local/opnsense/build/$BRANCH_VERSION/amd64/images/OPNsense-*-OpenSSL-dvd-amd64.iso /usr/build/opnsense/images/
+	echo 
+	echo ">>> Saved into /usr/build/opnsense/images/"
+}
+
+build_vga() {
+	cd /usr/tools
+
+	make clean-vga
+	make vga
+	make vga # this duplicate line for printing purposes (DO NOT REMOVE IT)
+	
+	mkdir -p /usr/build/opnsense/images && cp -f /usr/local/opnsense/build/$BRANCH_VERSION/amd64/images/OPNsense-*-OpenSSL-vga-amd64.img /usr/build/opnsense/images/
+	echo
+	echo ">>> Saved into /usr/build/opnsense/images/"
+}
+
+case ${1} in
+	upgrade_cp)
+		reset_core
+		upgrade_captiveportal
+		;;
+
+	upgrade_fr)
+		reset_plugins
+		reset_tools	
+		upgrade_freeradius
+		;;
+
+	core)
+		reset_core
+		build_core
+		;;
+
+	plugins)
+		reset_plugins
+		reset_tools	
+		build_plugins
+		;;
+
+	dvd)
+		build_dvd
+		;;
+
+	vga)
+		build_vga
+		;;		
+
+	help)
+		print_help
+		;;
+	*)
+		print_help
+		;;		
+esac

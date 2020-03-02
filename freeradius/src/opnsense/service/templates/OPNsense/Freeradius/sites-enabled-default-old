@@ -1,0 +1,394 @@
+{% if helpers.exists('OPNsense.freeradius.general.enabled') and OPNsense.freeradius.general.enabled == '1' %}
+
+server default {
+
+listen {
+        type = auth
+        ipaddr = *
+        port = 0
+
+        limit {
+              max_connections = 16
+              lifetime = 0
+              idle_timeout = 30
+        }
+}
+
+listen {
+        ipaddr = *
+        port = 0
+        type = acct
+
+        limit {
+        }
+}
+
+listen {
+        type = auth
+        ipv6addr = ::
+        port = 0
+
+        limit {
+              max_connections = 16
+              lifetime = 0
+              idle_timeout = 30
+        }
+}
+
+listen {
+        ipv6addr = ::
+        port = 0
+        type = acct
+
+        limit {
+        }
+}
+
+authorize {
+        filter_username
+        preprocess
+
+        update control { 
+{%-if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}                
+                &Current-Time := "%l" 
+                &Account-Start-Date := "0" # 01/01/1970
+                &Account-End-Date := "2524608000" # 01/01/2050 12:00AM UTC                     
+{%- endif %}                
+                &User-Group := ""        
+        }
+
+{% if helpers.exists('OPNsense.freeradius.user.users.user') %}
+{%   for user_list in helpers.toList('OPNsense.freeradius.user.users.user') %}
+{%     if user_list.enabled == '1' -%}  
+{%       if user_list.groupname is defined %}    
+        if (&User-Name == "{{ user_list.username }}") {
+                update control { 
+                        &User-Group := "{{ helpers.getUUID(user_list.groupname)['groupname'] }}"
+                }                
+        }
+{%-      endif %} 
+{%-    endif %}
+{%   endfor %}
+{% endif %}
+
+{# user groups #}
+
+{% if helpers.exists('OPNsense.freeradius.usergroup.usergroups.usergroup') %}
+{%   for group_list in helpers.toList('OPNsense.freeradius.usergroup.usergroups.usergroup') %}
+{%     if group_list.enabled == '1' %}
+        if (&control:User-Group == "{{ group_list.groupname }}") {
+                update control {
+{%       if group_list.authtype is defined %}
+                        &Auth-Type := {{ group_list.authtype }}
+{%       endif %}                        
+{%       if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+{%         if group_list.hourlysessionlimit is defined %}
+                        &Max-Hourly-Session := {{ group_list.hourlysessionlimit }}
+{%         endif %}
+{%         if group_list.dailysessionlimit is defined %}
+                        &Max-Daily-Session := {{ group_list.dailysessionlimit }}
+{%         endif %}
+{%         if group_list.weeklysessionlimit is defined %}
+                        &Max-Weekly-Session := {{ group_list.weeklysessionlimit }}
+{%         endif %}
+{%         if group_list.monthlysessionlimit is defined %}
+                        &Max-Monthly-Session := {{ group_list.monthlysessionlimit }}
+{%         endif %}
+{%         if group_list.accountsessionlimit is defined %}
+                        &Max-Account-Session := {{ group_list.accountsessionlimit }}
+{%         endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+{%         if group_list.hourlytrafficlimit is defined %}
+                        &Max-Hourly-Traffic := {{ group_list.hourlytrafficlimit }}
+{%         endif %}
+{%         if group_list.dailytrafficlimit is defined %}
+                        &Max-Daily-Traffic := {{ group_list.dailytrafficlimit }}
+{%         endif %}
+{%         if group_list.weeklytrafficlimit is defined %}
+                        &Max-Weekly-Traffic := {{ group_list.weeklytrafficlimit }}
+{%         endif %}
+{%         if group_list.monthlytrafficlimit is defined %}
+                        &Max-Monthly-Traffic := {{ group_list.monthlytrafficlimit }}
+{%         endif %}
+{%         if group_list.accounttrafficlimit is defined %}
+                        &Max-Account-Traffic := {{ group_list.accounttrafficlimit }}
+{%         endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+{%         if group_list.logintime_start_date is defined %}
+                        &Account-Start-Date := "{{ group_list.logintime_start_date }}"
+{%         endif %}
+{%         if group_list.logintime_end_date is defined %}
+                        &Account-End-Date := "{{ group_list.logintime_end_date }}"
+{%         endif %}
+{%         if group_list.logintime_value is defined %}
+                        &Login-Time := "{{ group_list.logintime_value }}"
+{%         endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.wispr') and OPNsense.freeradius.general.wispr == '1' %}
+{%         if group_list.wispr_bw_min_up is defined %}
+                        &WISPr-Bandwidth-Min-Up := {{ group_list.wispr_bw_min_up }}
+{%         endif %}
+{%         if group_list.wispr_bw_max_up is defined %}
+                        &WISPr-Bandwidth-Max-Up := {{ group_list.wispr_bw_max_up }}
+{%         endif %}
+{%         if group_list.wispr_bw_min_down is defined %}
+                        &WISPr-Bandwidth-Min-Down := {{ group_list.wispr_bw_min_down }}
+{%         endif %}
+{%         if group_list.wispr_bw_max_down is defined %}
+                        &WISPr-Bandwidth-Max-Down := {{ group_list.wispr_bw_max_down }}
+{%         endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.chillispot') and OPNsense.freeradius.general.chillispot == '1' %}
+{%         if group_list.chillispot_bw_max_up is defined %}
+                        &ChilliSpot-Bandwidth-Max-Up := {{ group_list.chillispot_bw_max_up }}
+{%         endif %}
+{%         if group_list.chillispot_bw_max_down is defined %}
+                        &ChilliSpot-Bandwidth-Max-Down := {{ group_list.chillispot_bw_max_down }}
+{%         endif %}
+{%       endif %}  
+                } 
+{%       if group_list.idletimeout is defined %}
+                update reply { &Idle-Timeout := {{ group_list.idletimeout }} }
+{%       endif %}                                          
+{%       if group_list.replymessage is defined %}
+                update reply { &Reply-Message := "{{ group_list.replymessage }}" }
+{%       endif %}                                 
+        }
+{%     endif %}
+{%   endfor %}
+{% endif %}
+
+        chap
+        mschap
+        digest
+        suffix
+        eap {
+                ok = return
+        }
+        files
+        expiration   
+        pap  
+{% if helpers.exists('OPNsense.freeradius.general.ldap_enabled') and OPNsense.freeradius.general.ldap_enabled == '1' %}
+        ldap
+        if ((ok || updated) && User-Password) {
+            update control {
+                Auth-Type := ldap
+            }
+        }
+{% else %}
+        -ldap
+{% endif %}              
+{% if helpers.exists('OPNsense.freeradius.general.sqlite') and OPNsense.freeradius.general.sqlite == '1' %}
+        sql
+{%   if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+        hourly_session_counter
+        daily_session_counter
+        weekly_session_counter
+        monthly_session_counter
+{%     if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+        account_session_counter
+{%     endif %}          
+{%-  endif %}   
+{%   if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+        hourly_traffic_counter
+        daily_traffic_counter
+        weekly_traffic_counter
+        monthly_traffic_counter
+{%     if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}        
+        account_traffic_counter
+{%     endif %}         
+{%-  endif %}       
+{% else %}
+        -sql
+{% endif %}
+{% if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+        logintime        
+{% endif -%} 
+
+{% if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+        if (&control:Current-Time < &control:Account-Start-Date) {
+                update reply {
+                        &Reply-Message := "Sorry %{User-Name}! Your account is not started yet. Account_Start_Date: '%{&control:Account-Start-Date}'"
+                }
+                reject
+        }
+        if (&control:Current-Time > &control:Account-End-Date) {
+                update reply {
+                        &Reply-Message := "Sorry %{User-Name}! Your account has expired. Account_End_Date: '%{&control:Account-End-Date}'"
+                }
+                reject
+        }
+{% endif %}
+}
+
+authenticate {
+        Auth-Type PAP {
+                pap
+        }
+        Auth-Type CHAP {
+                chap
+        }
+        Auth-Type MS-CHAP {
+                mschap
+        }
+{% if helpers.exists('OPNsense.freeradius.general.ldap_enabled') and OPNsense.freeradius.general.ldap_enabled == '1' %}
+        Auth-Type LDAP {
+                ldap
+        }
+{% endif %}
+        mschap
+        digest
+        eap
+}
+
+preacct {
+        preprocess
+        acct_unique
+        suffix
+        files
+}
+
+
+accounting {
+        detail
+        unix
+{% if helpers.exists('OPNsense.freeradius.general.sqlite') and OPNsense.freeradius.general.sqlite == '1' %}
+        sql
+{% else %}
+        -sql
+{% endif %}
+
+        update control {
+                &Beginning-Hourly-Time := "%{sql:SELECT strftime('%%s', 'now', '-' || strftime('%%M', 'now')  ||  ' minutes', '-' || strftime('%%S', 'now')  ||  ' seconds')}"
+                &Beginning-Daily-Time  := "%{sql:SELECT strftime('%%s', 'now', 'start of day')}"
+                &Beginning-Weekly-Time := "%{sql:SELECT strftime('%%s', 'now',  '-' ||  (strftime('%%d', 'now') * 1.0 %% 7) || ' days', '-' || strftime('%%H', 'now')  ||  ' hours', '-' || strftime('%%M', 'now')  ||  ' minutes',  '-' || strftime('%%S', 'now')  ||  ' seconds')}"
+                &Beginning-Monthly-Time := "%{sql:SELECT strftime('%%s', 'now', 'start of month')}"
+        }
+
+{% if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+        daily
+        sradutmp  
+
+        # hourly sessionlimit
+        if (&control:Max-Hourly-Session) {
+                if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Beginning-Hourly-Time} - AcctStartTime, 0)) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Hourly-Time}}" > "%{&control:Max-Hourly-Session}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your hourly session limit has reached." }
+                        reject
+                }  
+        }
+
+        # daily sessionlimit
+        if (&control:Max-Daily-Session) {
+                if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Beginning-Daily-Time} - AcctStartTime, 0)) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Daily-Time}}" > "%{&control:Max-Daily-Session}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your daily session limit has reached." }
+                        reject
+                }  
+        }
+  
+        # weekly sessionlimit
+        if (&control:Max-Weekly-Session) {
+                if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Beginning-Weekly-Time} - AcctStartTime, 0)) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Weekly-Time}}" > "%{&control:Max-Weekly-Session}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your weekly session limit has reached." }
+                        reject
+                }  
+        }
+ 
+        # monthly sessionlimit
+        if (&control:Max-Monthly-Session) {
+                if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Beginning-Monthly-Time} - AcctStartTime, 0)) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Monthly-Time}}" > "%{&control:Max-Monthly-Session}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your monthly session limit has reached." }
+                        reject
+                } 
+        }
+
+{%   if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}        
+        # account sessionlimit
+        if (&control:Max-Account-Session) {
+                if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Account-Start-Date} - AcctStartTime, 0)) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Account-Start-Date} AND AcctStopTime < %{&control:Account-End-Date}}" > "%{&control:Max-Account-Session}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your account session limit has reached." }
+                        reject
+                } 
+        }
+{%   endif %}                    
+{% endif %}
+{% if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+        # hourly trafficlimit
+        if (&control:Max-Hourly-Traffic) {
+                if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Hourly-Time}}" > "%{&control:Max-Hourly-Traffic}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your hourly traffic limit has reached." }
+                        reject
+                }  
+        }
+
+        # daily trafficlimit
+        if (&control:Max-Daily-Traffic) {
+                if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Daily-Time}}" > "%{&control:Max-Daily-Traffic}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your daily traffic limit has reached." }
+                        reject
+                }   
+        }
+ 
+        # weekly trafficlimit
+        if (&control:Max-Weekly-Traffic) {
+                if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Weekly-Time}}" > "%{&control:Max-Weekly-Traffic}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your weekly traffic limit has reached." }
+                        reject
+                } 
+        }
+  
+        # monthly trafficlimit
+        if (&control:Max-Monthly-Traffic) {
+                if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Monthly-Time}}" > "%{&control:Max-Monthly-Traffic}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your monthly traffic limit has reached." }
+                        reject
+                } 
+        }
+{%    if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+        # account trafficlimit
+        if (&control:Max-Account-Traffic) {
+                if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Account-Start-Date} AND AcctStopTime < %{&control:Account-End-Date}}" > "%{&control:Max-Account-Traffic}") {
+                        update reply { &Reply-Message := "Sorry %{User-Name}! Your account traffic limit has reached." }
+                        reject
+                } 
+        }
+{%     endif %}          
+{%- endif %}   
+        exec
+        attr_filter.accounting_response
+}
+
+session {
+{% if helpers.exists('OPNsense.freeradius.general.sqlite') and OPNsense.freeradius.general.sqlite == '1' %}
+        sql
+{% endif %}
+}
+
+post-auth {
+        update {
+                &reply: += &session-state:
+        }
+        -sql
+        exec
+        remove_reply_message_if_eap
+        Post-Auth-Type REJECT {
+                -sql
+                attr_filter.access_reject
+                eap
+                remove_reply_message_if_eap
+        }
+
+        Post-Auth-Type Challenge {
+        }
+
+}
+
+pre-proxy {
+}
+
+post-proxy {
+        eap
+}
+}
+{% endif %}

@@ -1,0 +1,32 @@
+--- src/opnsense/mvc/app/views/OPNsense/CaptivePortal/clients.volt	2018-11-20 14:17:51.702895000 +0000
++++ /usr/freeradius/captiveportal/src/opnsense/mvc/app/views/OPNsense/CaptivePortal/clients.volt	2018-11-20 13:58:05.209536000 +0000
+@@ -75,10 +75,11 @@
+             };
+             $("#grid-clients").bootgrid('destroy');
+             ajaxGet(url="/api/captiveportal/session/list/"+zoneid+"/", sendData={}, callback=function(data, status) {
++                console.log(data);
+                 if (status == "success") {
+                     $("#grid-clients > tbody").html('');
+                     $.each(data, function(key, value) {
+-                        var fields = ["sessionId", "userName", "macAddress", "ipAddress", "startTime"];
++                        var fields = ["sessionId", "userName", "macAddress", "ipAddress", "authenticated_via", "startTime", "last_accessed", "bytes_in", "bytes_out", "packets_in", "packets_out"];
+                         tr_str = '<tr>';
+                         for (var i = 0; i < fields.length; i++) {
+                             if (value[fields[i]] != null) {
+@@ -132,9 +133,15 @@
+                 <tr>
+                     <th data-column-id="sessionid" data-type="string" data-identifier="true" data-visible="false">{{ lang._('Session') }}</th>
+                     <th data-column-id="userName" data-type="string">{{ lang._('Username') }}</th>
+-                    <th data-column-id="macAddress" data-type="string" data-css-class="hidden-xs hidden-sm" data-header-css-class="hidden-xs hidden-sm">{{ lang._('MAC address') }}</th>
++                    <th data-column-id="macAddress" data-type="string" data-css-class="hidden-xs hidden-sm" data-header-css-class="hidden-xs hidden-sm" data-visible="false">{{ lang._('MAC address') }}</th>
+                     <th data-column-id="ipAddress" data-type="string" data-css-class="hidden-xs hidden-sm" data-header-css-class="hidden-xs hidden-sm">{{ lang._('IP address') }}</th>
++                    <th data-column-id="authenticated_via" data-type="string">{{ lang._('Authenticated via') }}</th>
+                     <th data-column-id="startTime" data-type="datetime">{{ lang._('Connected since') }}</th>
++                    <th data-column-id="last_accessed" data-type="datetime">{{ lang._('Last access') }}</th>
++                    <th data-column-id="bytes_in" data-type="string">{{ lang._('Bytes in') }}</th>
++                    <th data-column-id="bytes_out" data-type="string">{{ lang._('Bytes out') }}</th>
++                    <th data-column-id="packets_in" data-type="string">{{ lang._('Packets in') }}</th>
++                    <th data-column-id="packets_out" data-type="string">{{ lang._('Packets out') }}</th>                    
+                     <th data-column-id="commands" data-width="7em" data-formatter="commands" data-sortable="false">{{ lang._('Commands') }}</th>
+                 </tr>
+                 </thead>

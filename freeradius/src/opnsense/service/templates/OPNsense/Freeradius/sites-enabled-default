@@ -1,0 +1,671 @@
+{% if helpers.exists('OPNsense.freeradius.general.enabled') and OPNsense.freeradius.general.enabled == '1' %}
+
+server default {
+
+listen {
+        type = auth
+        ipaddr = *
+        port = 0
+
+        limit {
+              max_connections = 16
+              lifetime = 0
+              idle_timeout = 30
+        }
+}
+
+listen {
+        ipaddr = *
+        port = 0
+        type = acct
+
+        limit {
+        }
+}
+
+listen {
+        type = auth
+        ipv6addr = ::
+        port = 0
+
+        limit {
+              max_connections = 16
+              lifetime = 0
+              idle_timeout = 30
+        }
+}
+
+listen {
+        ipv6addr = ::
+        port = 0
+        type = acct
+
+        limit {
+        }
+}
+
+authorize {
+        update control { 
+{%-if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}                
+                &Current-Time := "%l" 
+                #&Account-Start-Date := "0" # 01/01/1970
+                #&Account-End-Date := "2524608000" # 01/01/2050 12:00AM UTC                     
+{%- endif %}  
+                &UserGroup-Name := "%{sql:SELECT groupname FROM radusergroup WHERE username='%{User-Name}' AND priority=1}"  
+        }    
+                
+        filter_username
+        preprocess
+        chap
+        mschap
+        digest
+        suffix
+        eap {
+                ok = return
+        }
+        files
+        expiration   
+        pap  
+{% if helpers.exists('OPNsense.freeradius.general.ldap_enabled') and OPNsense.freeradius.general.ldap_enabled == '1' %}
+        ldap
+        if ((ok || updated) && User-Password) {
+            update control {
+                Auth-Type := ldap
+            }
+        }
+{% else %}
+        -ldap
+{% endif %}              
+{% if helpers.exists('OPNsense.freeradius.general.sqlite') and OPNsense.freeradius.general.sqlite == '1' %}
+        sql
+
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Simultaneous-Use'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Simultaneous-Use = "%{&control:Query-Output}"
+                }
+        }           
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Auth-Type'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Auth-Type = "%{&control:Query-Output}"
+                }
+        } 
+
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupreply WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Idle-Timeout'}" }
+        if (&control:Query-Output != "") {
+                update reply {
+                        &Idle-Timeout = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupreply WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Reply-Message'}" }
+        if (&control:Query-Output != "") {
+                update reply {
+                        &Reply-Message = "%{&control:Query-Output}"
+                }
+        }                  
+
+{%   if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}        
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Hourly-Session'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Hourly-Session = "%{&control:Query-Output}"
+                }
+        }       
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Daily-Session'}"  }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Daily-Session = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Weekly-Session'}"  }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Weekly-Session = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Monthly-Session'}"  }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Monthly-Session = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Account-Session'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Account-Session = "%{&control:Query-Output}"
+                }
+        }
+{%   endif %}     
+{%   if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Hourly-Traffic'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Hourly-Traffic = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Daily-Traffic'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Daily-Traffic = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Daily-Traffic'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Weekly-Traffic = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Monthly-Traffic'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Monthly-Traffic = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Account-Traffic'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Max-Account-Traffic = "%{&control:Query-Output}"
+                }
+        }
+{%   endif %}     
+{%   if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Login-Time'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Login-Time = "%{&control:Query-Output}"
+                }
+        }    
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Account-Start-Date'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Account-Start-Date = "%{&control:Query-Output}"
+                }
+        }
+        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Account-End-Date'}" }
+        if (&control:Query-Output != "") {
+                update control {
+                        &Account-End-Date = "%{&control:Query-Output}"
+                }
+        }          
+{%   endif %} 
+{%   if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+        hourly_session_counter
+        daily_session_counter
+        weekly_session_counter
+        monthly_session_counter
+{%     if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+        account_session_counter
+{%     endif %}          
+{%-  endif %}   
+{%   if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+        hourly_traffic_counter
+        daily_traffic_counter
+        weekly_traffic_counter
+        monthly_traffic_counter
+{%     if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}        
+        account_traffic_counter
+{%     endif %}         
+{%-  endif %}   
+
+{%   if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+        logintime
+        
+        if (&control:Current-Time < &control:Account-Start-Date) {
+                update reply {
+                        &Reply-Message := "Sorry %{User-Name}! Your account is not started yet. Account_Start_Date: '%{&control:Account-Start-Date}'"
+                }
+                reject
+        }
+        if (&control:Current-Time > &control:Account-End-Date) {
+                update reply {
+                        &Reply-Message := "Sorry %{User-Name}! Your account has expired. Account_End_Date: '%{&control:Account-End-Date}'"
+                }
+                reject
+        }
+{%   endif %} 
+{% else %} 
+        -sql
+{% endif %}    
+}
+
+authenticate {
+        Auth-Type PAP {
+                pap
+        }
+        Auth-Type CHAP {
+                chap
+        }
+        Auth-Type MS-CHAP {
+                mschap
+        }
+{% if helpers.exists('OPNsense.freeradius.general.ldap_enabled') and OPNsense.freeradius.general.ldap_enabled == '1' %}
+        Auth-Type LDAP {
+                ldap
+        }
+{% endif %}
+        mschap
+        digest
+        eap
+}
+
+preacct {
+        preprocess
+        acct_unique
+        suffix
+        files
+}
+
+
+accounting {
+        detail
+        unix
+{% if helpers.exists('OPNsense.freeradius.general.sqlite') and OPNsense.freeradius.general.sqlite == '1' %}
+        sql
+{% else %}
+        -sql
+{% endif %}
+{% if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+        daily
+        sradutmp 
+{% endif %}        
+        exec
+        attr_filter.accounting_response        
+
+{% if helpers.exists('OPNsense.freeradius.general.sqlite') and OPNsense.freeradius.general.sqlite == '1' %}
+        update control {
+                &Current-Time   := "%l" 
+                &UserGroup-Name := "%{sql:SELECT groupname FROM radusergroup WHERE username='%{User-Name}' AND priority=1}"
+        }
+
+
+        if ("%{Acct-Status-Type}" == "Start" || "%{Acct-Status-Type}" == "Stop") {
+{% if helpers.exists('OPNsense.freeradius.general.bandwidthlimit') and OPNsense.freeradius.general.bandwidthlimit == '1' %}
+                update control {
+                        &Max-Upload-Bandwidth         := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Upload-Bandwidth'}"
+                        &Max-Upload-BandwidthMetric   := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Upload-BandwidthMetric'}"
+                        &Max-Download-Bandwidth       := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Download-Bandwidth'}"
+                        &Max-Download-BandwidthMetric := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Download-BandwidthMetric'}"
+                }
+{% endif %}
+{% if helpers.exists('OPNsense.freeradius.general.bandwidthlimit') and OPNsense.freeradius.general.bandwidthlimit == '1' %}
+                if (&control:Max-Upload-Bandwidth == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Upload-Bandwidth'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Upload-Bandwidth := "%{&control:Query-Output}"
+                                }                                
+                        }                                
+                }
+                if (&control:Max-Upload-BandwidthMetric == "") {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Upload-BandwidthMetric'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Upload-BandwidthMetric := "%{&control:Query-Output}"
+                                }                                
+                        }                                
+                }        
+                if (&control:Max-Download-Bandwidth == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Download-Bandwidth'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Download-Bandwidth := "%{&control:Query-Output}"
+                                }                                
+                        }                                  
+                }
+                if (&control:Max-Download-BandwidthMetric == "") {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Download-BandwidthMetric'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Download-BandwidthMetric := "%{&control:Query-Output}"
+                                }                                
+                        }                                  
+                }
+                if (&control:Max-Upload-Bandwidth != 0 && &control:Max-Upload-BandwidthMetric != "") {
+                        switch "%{Acct-Status-Type}" {
+                                case 'Start' {
+                                        update control {
+                                                &Script-Output := `/usr/local/opnsense/scripts/Freeradius/bandwidth_controller.py create uplink %{NAS-IP-Address} %{Acct-Session-Id} %{User-Name} %{&control:Max-Upload-Bandwidth} %{&control:Max-Upload-BandwidthMetric}`  
+                                        }                                                            
+                                }
+                                case 'Stop' {
+                                        update control {
+                                                &Script-Output := `/usr/local/opnsense/scripts/Freeradius/bandwidth_controller.py delete uplink %{NAS-IP-Address} %{Acct-Session-Id} %{User-Name} %{Framed-IP-Address} %{&control:Max-Upload-Bandwidth} %{&control:Max-Upload-BandwidthMetric}`
+                                        }
+                                }
+                        }  
+                }
+                if (&control:Max-Download-Bandwidth != 0 && &control:Max-Download-BandwidthMetric != "") {
+                        switch "%{Acct-Status-Type}" {
+                                case 'Start' {
+                                        update control {
+                                                &Script-Output := `/usr/local/opnsense/scripts/Freeradius/bandwidth_controller.py create downlink %{NAS-IP-Address} %{Acct-Session-Id} %{User-Name} %{&control:Max-Download-Bandwidth} %{&control:Max-Download-BandwidthMetric}`
+                                        }
+                                }
+                                case 'Stop' {
+                                        update control {
+                                                &Script-Output := `/usr/local/opnsense/scripts/Freeradius/bandwidth_controller.py delete downlink %{NAS-IP-Address} %{Acct-Session-Id} %{User-Name} %{Framed-IP-Address} %{&control:Max-Download-Bandwidth} %{&control:Max-Download-BandwidthMetric}`
+                                        }                                
+                                }
+                        }                  
+                }  
+{% endif %}                  
+        }
+
+        if ("%{Acct-Status-Type}" == "Interim-Update") {
+                update control {
+                        &Beginning-Hourly-Time  := "%{sql:SELECT strftime('%%s', 'now', '-' || strftime('%%M', 'now')  ||  ' minutes', '-' || strftime('%%S', 'now')  ||  ' seconds')}"
+                        &Beginning-Daily-Time   := "%{sql:SELECT strftime('%%s', 'now', 'start of day')}"
+                        &Beginning-Weekly-Time  := "%{sql:SELECT strftime('%%s', 'now',  '-' ||  (strftime('%%d', 'now') * 1.0 %% 7) || ' days', '-' || strftime('%%H', 'now')  ||  ' hours', '-' || strftime('%%M', 'now')  ||  ' minutes',  '-' || strftime('%%S', 'now')  ||  ' seconds')}"
+                        &Beginning-Monthly-Time := "%{sql:SELECT strftime('%%s', 'now', 'start of month')}"
+{% if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+                        &Account-Start-Date := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Account-Start-Date'}"
+                        &Account-End-Date   := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Account-End-Date'}"                          
+{% endif %}                 
+{% if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+                        &Max-Hourly-Session  := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Hourly-Session'}"    
+                        &Max-Daily-Session   := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Daily-Session'}"                          
+                        &Max-Weekly-Session  := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Weekly-Session'}"                    
+                        &Max-Monthly-Session := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Monthly-Session'}" 
+                        &Max-Account-Session := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Account-Session'}"    
+{% endif %}
+{% if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+                        &Max-Hourly-Traffic  := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Hourly-Traffic'}"               
+                        &Max-Daily-Traffic   := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Daily-Traffic'}"                
+                        &Max-Weekly-Traffic  := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Weekly-Traffic'}"                        
+                        &Max-Monthly-Traffic := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Monthly-Traffic'}" 
+                        &Max-Account-Traffic := "%{sql:SELECT value FROM radcheck WHERE username='%{User-Name}' AND attribute='Max-Account-Traffic'}" 
+{% endif %}
+                }
+
+{% if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+                if (&control:Account-Start-Date == "") {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Account-Start-Date'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Account-Start-Date := "%{&control:Query-Output}"
+                                }                                
+                        }                                
+                }   
+                if (&control:Account-End-Date == "") {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Account-End-Date'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Account-End-Date := "%{&control:Query-Output}"
+                                }                                
+                        }                                
+                }                            
+{% endif %}      
+{% if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+                if (&control:Max-Hourly-Session == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Hourly-Session'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Hourly-Session := "%{&control:Query-Output}"
+                                }
+                        }
+                }
+                if (&control:Max-Daily-Session == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Daily-Session'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Daily-Session := "%{&control:Query-Output}"
+                                }
+                        }                
+                } 
+                if (&control:Max-Weekly-Session == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Weekly-Session'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Weekly-Session := "%{&control:Query-Output}"
+                                }
+                        }                
+                }
+                if (&control:Max-Monthly-Session == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Monthly-Session'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Monthly-Session := "%{&control:Query-Output}"
+                                }
+                        }                
+                }
+                if (&control:Max-Account-Session == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Account-Session'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Account-Session := "%{&control:Query-Output}"
+                                }
+                        }                
+                }
+{% endif %}     
+{% if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+                if (&control:Max-Hourly-Traffic == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Hourly-Traffic'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Hourly-Traffic := "%{&control:Query-Output}"
+                                }
+                        }                
+                }
+                if (&control:Max-Daily-Traffic == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Daily-Traffic'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Daily-Traffic := "%{&control:Query-Output}"
+                                }
+                        }                
+                }
+                if (&control:Max-Weekly-Traffic == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Weekly-Traffic'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Weekly-Traffic := "%{&control:Query-Output}"
+                                }
+                        }                
+                }
+                if (&control:Max-Monthly-Traffic == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Monthly-Traffic'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Monthly-Traffic := "%{&control:Query-Output}"
+                                }
+                        }                
+                }
+                if (&control:Max-Account-Traffic == 0) {
+                        update control { &Query-Output := "%{sql:SELECT value FROM radgroupcheck WHERE groupname='%{&control:UserGroup-Name}' AND attribute='Max-Account-Traffic'}" }
+                        if (&control:Query-Output != "") {
+                                update control {
+                                        &Max-Account-Traffic := "%{&control:Query-Output}"
+                                }
+                        }                
+                }
+{% endif %}   
+{% if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+                # hourly sessionlimit
+                if (&control:Max-Hourly-Session && &control:Max-Hourly-Session > 0) {
+                        if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Beginning-Hourly-Time} - AcctStartTime, 0)) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Hourly-Time}}" > "%{&control:Max-Hourly-Session}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your hourly session limit has reached." }
+                                }
+                        }  
+                }
+                # daily sessionlimit
+                if (&control:Max-Daily-Session && &control:Max-Daily-Session > 0) {
+                        if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Beginning-Daily-Time} - AcctStartTime, 0)) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Daily-Time}}" > "%{&control:Max-Daily-Session}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your daily session limit has reached." }
+                                }
+                        }  
+                }
+                # weekly sessionlimit
+                if (&control:Max-Weekly-Session && &control:Max-Weekly-Session > 0) {
+                        if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Beginning-Weekly-Time} - AcctStartTime, 0)) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Weekly-Time}}" > "%{&control:Max-Weekly-Session}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your weekly session limit has reached." }
+                                }
+                        }  
+                }
+                # monthly sessionlimit
+                if (&control:Max-Monthly-Session && &control:Max-Monthly-Session > 0) {
+                        if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Beginning-Monthly-Time} - AcctStartTime, 0)) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Monthly-Time}}" > "%{&control:Max-Monthly-Session}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your monthly session limit has reached." }
+                                }
+                        } 
+                }
+{%   if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}        
+                # account sessionlimit
+                if (&control:Max-Account-Session && &control:Max-Account-Session > 0) {
+                        if ("%{sql:SELECT SUM(AcctSessionTime - max(%{&control:Account-Start-Date} - AcctStartTime, 0)) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Account-Start-Date} AND %{&control:Current-Time} < %{&control:Account-End-Date}}" > "%{&control:Max-Account-Session}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your account session limit has reached." }
+                                }
+                        } 
+                }
+{%   endif %}                    
+{% endif %}
+{% if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+                # hourly trafficlimit
+                if (&control:Max-Hourly-Traffic && &control:Max-Hourly-Traffic > 0) {
+                        if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Hourly-Time}}" > "%{&control:Max-Hourly-Traffic}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your hourly traffic limit has reached." }
+                                }                               
+                        }  
+                }
+                # daily trafficlimit
+                if (&control:Max-Daily-Traffic && &control:Max-Daily-Traffic > 0) {
+                        if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Daily-Time}}" > "%{&control:Max-Daily-Traffic}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your daily traffic limit has reached." }
+                                }
+                        }   
+                }
+                # weekly trafficlimit
+                if (&control:Max-Weekly-Traffic && &control:Max-Weekly-Traffic > 0) {
+                        if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Weekly-Time}}" > "%{&control:Max-Weekly-Traffic}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your weekly traffic limit has reached." }
+                                }
+                        } 
+                }
+                # monthly trafficlimit
+                if (&control:Max-Monthly-Traffic && &control:Max-Monthly-Traffic > 0) {
+                        if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Beginning-Monthly-Time}}" > "%{&control:Max-Monthly-Traffic}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your monthly traffic limit has reached." }
+                                }
+                        } 
+                }
+{%    if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+                # account trafficlimit
+                if (&control:Max-Account-Traffic && &control:Max-Account-Traffic > 0) {
+                        if ("%{sql:SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username='%{User-Name}' AND AcctStartTime + AcctSessionTime > %{&control:Account-Start-Date} AND %{&control:Current-Time} < %{&control:Account-End-Date}}" > "%{&control:Max-Account-Traffic}") {
+                                update control {
+                                        # disconnection
+                                        &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                                }
+                                if (&control:Script-Output == "User-Request") {
+                                        update reply { &Reply-Message := "Sorry %{User-Name}! Your account traffic limit has reached." }
+                                }
+                        } 
+                }
+{%    endif %}          
+{%  endif %}  
+{%  if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+                if (&control:Account-Start-Date != "" && &control:Current-Time < &control:Account-Start-Date) {
+                        update control {
+                                # disconnection
+                                &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                        }
+                        if (&control:Script-Output == "User-Request") {
+                                update reply { 
+                                        &Reply-Message := "Sorry %{User-Name}! Your account is not started yet. Account_Start_Date: '%{&control:Account-Start-Date}'"
+                                }
+                        }
+                }
+                if (&control:Account-End-Date != "" && &control:Current-Time > &control:Account-End-Date) {
+                        update control {
+                                # disconnection
+                                &Script-Output := `/usr/local/opnsense/scripts/Freeradius/session_controller.py %{NAS-IP-Address} %{Acct-Session-Id}`
+                        }
+                        if (&control:Script-Output == "User-Request") {
+                                update reply { 
+                                        &Reply-Message := "Sorry %{User-Name}! Your account has expired. Account_End_Date: '%{&control:Account-End-Date}'"
+                                }
+                        }
+                }
+{%   endif %} 
+{% endif %}
+        }
+}
+
+session {
+{% if helpers.exists('OPNsense.freeradius.general.sqlite') and OPNsense.freeradius.general.sqlite == '1' %}
+        sql
+{% endif %}
+}
+
+post-auth {
+        update {
+                &reply: += &session-state:
+        }
+        -sql
+        exec
+        remove_reply_message_if_eap
+        Post-Auth-Type REJECT {
+                -sql
+                attr_filter.access_reject
+                eap
+                remove_reply_message_if_eap
+        }
+
+        Post-Auth-Type Challenge {
+        }
+
+}
+
+pre-proxy {
+}
+
+post-proxy {
+        eap
+}
+}
+{% endif %}

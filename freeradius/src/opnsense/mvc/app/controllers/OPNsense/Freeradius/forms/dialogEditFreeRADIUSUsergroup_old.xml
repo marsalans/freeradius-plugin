@@ -1,0 +1,73 @@
+<form>
+    <field>
+        <id>usergroup.enabled</id>
+        <label>Enabled</label>
+        <type>checkbox</type>
+        <help>This will enable or disable the usergroup account.</help>
+    </field>
+    <field>
+        <id>usergroup.groupname</id>
+        <label>Group Name</label>
+        <type>text</type>
+        <help>Set the unique group name for the usergroup. Allowed characters are 0-9, a-z, A-Z, and ._-</help>
+    </field>
+    <field>
+        <id>usergroup.simultaneous</id>
+        <label>Simultaneous Use</label>
+        <type>text</type>
+        <help>Set the simultaneous use for the usergroup. its range from 1 to 10. if you want to remove it, leave it empty.</help>
+    </field>     
+    <field>
+        <id>usergroup.description</id>
+        <label>Description</label>
+        <type>text</type>
+        <help>Given name, last name, or anything you need to describe.</help>
+    </field>
+    <field>
+        <id>usergroup.authtype</id>
+        <label>Authentication Type</label>
+        <type>dropdown</type>
+        <help>Set the authentication type of each usergroup group.</help>
+    </field>   
+    <field>
+        <id>usergroup.replymessage</id>
+        <label>Reply Message</label>
+        <type>text</type>
+        <help>Reply message return a message after authentication for usergroup group, empty message does not involved in the process.</help>
+    </field>    
+    <field>
+        <id>usergroup.mikrotik</id>
+        <label>Mikrotik VLAN</label>
+        <type>mikrotik</type>
+        <advanced>true</advanced>
+        <help>Set the Mikrotik VLAN ID and type attribute. Mikrotik uses own attributes for VLAN assignment and for VLAN type use a value of 0 is fine.</help>
+    </field>    
+    <field>
+        <id>usergroup.wispr</id>
+        <label>WISPr Bandwith</label>
+        <type>wispr</type>
+        <advanced>true</advanced>
+        <help>Set the bandwith for WISPr attribute. The value is treated as bits/s.</help>
+    </field>   
+    <field>
+        <id>usergroup.chillispot</id>
+        <label>ChilliSpot Bandwith</label>
+        <type>chillispot</type>
+        <advanced>true</advanced>
+        <help>Set the bandwith for ChilliSpot attribute. The value is treated as kbits/s.</help>
+    </field>    
+    <field>
+        <id>usergroup.logintime</id>
+        <label>Login Time</label>
+        <type>logintime</type>
+        <advanced>true</advanced>
+        <help>Set the Login-Time. This can be used by the Captive Portal.</help>
+    </field>          
+    <field>
+        <id>usergroup.sessionlimit</id>
+        <label>Max Daily Session</label>
+        <type>sessionlimit</type>
+        <advanced>true</advanced>
+        <help>Set the maximum daily session limit. This can be used by the Captive Portal.</help>
+    </field>   
+</form>

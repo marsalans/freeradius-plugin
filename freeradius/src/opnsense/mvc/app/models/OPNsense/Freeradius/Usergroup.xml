@@ -1,0 +1,140 @@
+<model>
+    <mount>//OPNsense/freeradius/usergroup</mount>
+    <description>FreeRADIUS usergroup configuration</description>
+    <version>1.0.1</version>
+    <items>
+        <usergroups>
+            <usergroup type="ArrayField">
+                <enabled type="BooleanField">
+                    <default>1</default>
+                    <Required>Y</Required>
+                </enabled>
+                <groupname type="TextField">
+                    <Required>N</Required>
+                </groupname>                
+                <description type="TextField">
+                    <Required>N</Required>
+                </description>
+                <simultaneous type="IntegerField">
+                    <Required>N</Required>
+                    <MinimumValue>1</MinimumValue>
+                    <MaximumValue>10</MaximumValue>
+                </simultaneous>                  
+                <authtype type="OptionField">
+                    <default>Accept</default>
+                    <OptionValues>
+                        <Accept>Accept</Accept>
+                        <Reject>Reject</Reject>
+                    </OptionValues>
+                    <Required>Y</Required>
+                    <Multiple>N</Multiple>                    
+                </authtype>
+                <idletimeout type="IntegerField">
+                    <Required>N</Required>
+                    <MinimumValue>1</MinimumValue>
+                    <MaximumValue>10000</MaximumValue>
+                </idletimeout>                  
+                <replymessage type="TextField">
+                    <Required>N</Required>
+                </replymessage>
+                <wispr_bw_min_up type="IntegerField">
+                    <Required>N</Required>
+                </wispr_bw_min_up>
+                <wispr_bw_max_up type="IntegerField">
+                    <Required>N</Required>
+                </wispr_bw_max_up>
+                <wispr_bw_min_down type="IntegerField">
+                    <Required>N</Required>
+                </wispr_bw_min_down>
+                <wispr_bw_max_down type="IntegerField">
+                    <Required>N</Required>
+                </wispr_bw_max_down>
+                <chillispot_bw_max_up type="IntegerField">
+                    <Required>N</Required>
+                </chillispot_bw_max_up>
+                <chillispot_bw_max_down type="IntegerField">
+                    <Required>N</Required>
+                </chillispot_bw_max_down>
+                <mikrotik_vlan_id_number type="IntegerField">
+                    <Required>N</Required>
+                </mikrotik_vlan_id_number>
+                <mikrotik_vlan_id_type type="IntegerField">
+                    <Required>N</Required>
+                </mikrotik_vlan_id_type>
+                <logintime_ui_start_date type="TextField">
+                    <Required>N</Required>
+                </logintime_ui_start_date>
+                <logintime_ui_end_date type="TextField">
+                    <Required>N</Required>
+                </logintime_ui_end_date>
+                <logintime_start_date type="TextField">
+                    <Required>N</Required>
+                </logintime_start_date>
+                <logintime_end_date type="TextField">
+                    <Required>N</Required>
+                </logintime_end_date>                
+                <logintime_value type="TextField">
+                    <Required>N</Required>
+                </logintime_value>     
+                <bandwidthlimit type="ModelRelationField">
+                    <Model>
+                        <template>
+                            <source>OPNsense.Freeradius.Bandwidthrule</source>
+                            <items>bandwidthrules.bandwidthrule</items>
+                            <display>description</display>
+                            <group>description</group>
+                        </template>
+                    </Model>
+                    <ValidationMessage>Bandwidth not found</ValidationMessage>
+                    <Multiple>N</Multiple>
+                    <Required>N</Required>
+                </bandwidthlimit>                                                           
+                <hourlysessionlimit type="TextField">
+                    <Required>N</Required>
+                </hourlysessionlimit>
+                <hourlysessionlimit_ui type="TextField">
+                    <Required>N</Required>                                    
+                </hourlysessionlimit_ui>                                                                                                 
+                <dailysessionlimit type="TextField">
+                    <Required>N</Required>
+                </dailysessionlimit>
+                <dailysessionlimit_ui type="TextField">
+                    <Required>N</Required>                                    
+                </dailysessionlimit_ui>   
+                <weeklysessionlimit type="TextField">
+                    <Required>N</Required>
+                </weeklysessionlimit>
+                <weeklysessionlimit_ui type="TextField">
+                    <Required>N</Required>                                    
+                </weeklysessionlimit_ui>   
+                <monthlysessionlimit type="TextField">
+                    <Required>N</Required>
+                </monthlysessionlimit>
+                <monthlysessionlimit_ui type="TextField">
+                    <Required>N</Required>                                    
+                </monthlysessionlimit_ui>   
+                <accountsessionlimit type="TextField">
+                    <Required>N</Required>
+                </accountsessionlimit>
+                <accountsessionlimit_ui type="TextField">
+                    <Required>N</Required>                                    
+                </accountsessionlimit_ui>                                                   
+                <hourlytrafficlimit type="TextField">
+                    <Required>N</Required>
+                </hourlytrafficlimit>       
+                <dailytrafficlimit type="TextField">
+                    <Required>N</Required>
+                </dailytrafficlimit>   
+                <weeklytrafficlimit type="TextField">
+                    <Required>N</Required>
+                </weeklytrafficlimit>   
+                <monthlytrafficlimit type="TextField">
+                    <Required>N</Required>
+                </monthlytrafficlimit>   
+                <accounttrafficlimit type="TextField">
+                    <Required>N</Required>
+                </accounttrafficlimit>                               
+            </usergroup>
+        </usergroups>
+    </items>
+</model>

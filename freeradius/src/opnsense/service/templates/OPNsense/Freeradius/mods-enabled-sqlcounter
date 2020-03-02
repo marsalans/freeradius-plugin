@@ -1,0 +1,149 @@
+{% if helpers.exists('OPNsense.freeradius.general.enabled') and OPNsense.freeradius.general.enabled == '1' %}
+{%   if helpers.exists('OPNsense.freeradius.general.sqlite') and OPNsense.freeradius.general.sqlite == '1' %}
+
+#  Rather than maintaining separate (GDBM) databases of
+#  accounting info for each counter, this module uses the data
+#  stored in the raddacct table by the sql modules. This
+#  module NEVER does any database INSERTs or UPDATEs.  It is
+#  totally dependent on the SQL module to process Accounting
+#  packets.
+#
+#  The sql-module-instance' parameter holds the instance of the sql
+#  module to use when querying the SQL database. Normally it
+#  is just "sql".  If you define more and one SQL module
+#  instance (usually for failover situations), you can
+#  specify which module has access to the Accounting Data
+#  (radacct table).
+#
+#  The 'reset' parameter defines when the counters are all
+#  reset to zero.  It can be hourly, daily, weekly, monthly or
+#  never.  It can also be user defined. It should be of the
+#  form:
+#  	num[hdwm] where:
+#  	h: hours, d: days, w: weeks, m: months
+#  	If the letter is ommited days will be assumed. In example:
+#  	reset = 10h (reset every 10 hours)
+#  	reset = 12  (reset every 12 days)
+#
+#  The 'key' parameter specifies the unique identifier for the
+#  counter records (usually 'User-Name').
+#
+#  The 'query' parameter specifies the SQL query used to get
+#  the current Counter value from the database. There are 3
+#  parameters that can be used in the query:
+#		%b	unix time value of beginning of reset period
+#		%e	unix time value of end of reset period
+#
+#  The 'check_name' parameter is the name of the 'check'
+#  attribute to use to access the counter in the 'users' file
+#  or SQL radcheck or radcheckgroup tables.
+#
+#  DEFAULT  Max-Daily-Session > 3600, Auth-Type = Reject
+#      Reply-Message = "You've used up more than one hour today"
+#
+
+{%     if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+sqlcounter hourly_session_counter{
+        sql_module_instance = sql
+        counter_name = Hourly-Session-Counter
+        check_name = Max-Hourly-Session
+        reply_name = Session-Timeout
+        key = User-Name
+        reset = hourly
+        query = "SELECT SUM(AcctSessionTime - max(%%b - AcctStartTime, 0)) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %%b"
+}
+sqlcounter daily_session_counter{
+        sql_module_instance = sql
+        counter_name = Daily-Session-Counter
+        check_name = Max-Daily-Session
+        reply_name = Session-Timeout
+        key = User-Name
+        reset = daily
+        query = "SELECT SUM(AcctSessionTime - max(%%b - AcctStartTime, 0)) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %%b"
+	#query = "SELECT SUM(AcctSessionTime) FROM radacct WHERE username = '%{${key}}' AND (AcctStopTime >= strftime('%%s', 'now', 'start of day') OR AcctUpdateTime >= strftime('%%s', 'now', 'start of day'))"
+}
+sqlcounter weekly_session_counter{
+        sql_module_instance = sql
+        counter_name = Weekly-Session-Counter
+        check_name = Max-Weekly-Session
+        reply_name = Session-Timeout
+        key = User-Name
+        reset = weekly
+        query = "SELECT SUM(AcctSessionTime - max(%%b - AcctStartTime, 0)) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %%b"
+}
+sqlcounter monthly_session_counter{
+        sql_module_instance = sql
+        counter_name = Monthly-Session-Counter
+        check_name = Max-Monthly-Session
+        reply_name = Session-Timeout
+        key = User-Name
+        reset = monthly
+        query = "SELECT SUM(AcctSessionTime - max(%%b - AcctStartTime, 0)) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %%b"
+}
+
+{%       if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+sqlcounter account_session_counter{
+        sql_module_instance = sql
+        counter_name = Acct-Session-Counter
+        check_name = Max-Account-Session
+        reply_name = Session-Timeout
+        key = User-Name
+        reset = never
+        query = "SELECT SUM(AcctSessionTime - max(%{&control:Account-Start-Date} - AcctStartTime, 0)) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %{&control:Account-Start-Date} AND AcctStopTime < %{&control:Account-End-Date}"
+}
+{%       endif %}
+{%     endif %}
+
+{%     if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+sqlcounter hourly_traffic_counter{
+        sql_module_instance = sql
+        counter_name = Hourly-Traffic-Counter
+        check_name = Max-Hourly-Traffic
+        reply_name = Traffic-Limit
+        key = User-Name
+        reset = hourly
+        query = "SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %%b"
+}
+sqlcounter daily_traffic_counter{
+        sql_module_instance = sql
+        counter_name = Daily-Traffic-Counter
+        check_name = Max-Daily-Traffic
+        reply_name = Traffic-Limit
+        key = User-Name
+        reset = daily
+        query = "SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %%b"
+}
+sqlcounter weekly_traffic_counter{
+        sql_module_instance = sql
+        counter_name = Weekly-Traffic-Counter
+        check_name = Max-Weekly-Traffic
+        reply_name = Traffic-Limit
+        key = User-Name
+        reset = weekly
+        query = "SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %%b"
+}
+sqlcounter monthly_traffic_counter{
+        sql_module_instance = sql
+        counter_name = Monthly-Traffic-Counter
+        check_name = Max-Monthly-Traffic
+        reply_name = Traffic-Limit
+        key = User-Name
+        reset = monthly
+        query = "SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %%b"
+}
+
+{%       if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+sqlcounter account_traffic_counter{
+        sql_module_instance = sql
+        counter_name = Acct-Traffic-Counter
+        check_name = Max-Account-Traffic
+        reply_name = Traffic-Limit
+        key = User-Name
+        reset = never
+        query = "SELECT SUM(AcctInputOctets + AcctOutputOctets) FROM radacct WHERE username = '%{${key}}' AND AcctStartTime + AcctSessionTime > %{&control:Account-Start-Date} AND AcctStopTime < %{&control:Account-End-Date}"
+}
+{%       endif %}
+{%     endif %}
+
+{%   endif %}
+{% endif %}

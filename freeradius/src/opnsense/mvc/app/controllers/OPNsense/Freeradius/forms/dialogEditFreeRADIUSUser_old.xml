@@ -1,0 +1,105 @@
+<form>
+    <field>
+        <id>user.enabled</id>
+        <label>Enabled</label>
+        <type>checkbox</type>
+        <help>This will enable or disable the user account.</help>
+    </field>
+    <field>
+        <id>user.username</id>
+        <label>Username</label>
+        <type>text</type>
+        <help>Set the unique username for the user. Allowed characters are 0-9, a-z, A-Z, and ._-</help>
+    </field>
+    <field>
+        <id>user.password</id>
+        <label>Password</label>
+        <type>password</type>
+        <help>Set the password for the user. Allowed characters are 0-9, a-z, A-Z, and ,._-!$%/()+#= with up to 128 characters.</help>
+    </field>
+    <field>
+        <id>user.groupname</id>
+        <label>Group Name</label>
+        <type>dropdown</type>
+        <help>Set the unique groupname for the user. Allowed characters are 0-9, a-z, A-Z, and ._-</help>
+    </field>    
+    <field>
+        <id>user.simultaneous</id>
+        <label>Simultaneous Use</label>
+        <type>text</type>
+        <help>Set the simultaneous use for the user. its range from 1 to 10. if you want to remove it, leave it empty.</help>
+    </field>     
+    <field>
+        <id>user.description</id>
+        <label>Description</label>
+        <type>text</type>
+        <help>Given name, last name, or anything you need to describe.</help>
+    </field>
+    <field>
+        <id>user.ip</id>
+        <label>IP Address</label>
+        <type>text</type>
+        <help>Set the IP address the user should receive.</help>
+    </field>
+    <field>
+        <id>user.subnet</id>
+        <label>Subnetmask</label>
+        <type>text</type>
+        <help>Subnet to receive, e.g. 255.255.255.0</help>
+    </field>
+    <field>
+        <id>user.route</id>
+        <label>Routes</label>
+        <style>tokenize</style>
+        <type>select_multiple</type>
+        <allownew>true</allownew>
+        <help>Add routes in CIDR notation, e.g. 192.168.2.0/24. Multiple entries are allowed</help>
+    </field>
+    <field>
+        <id>user.ip6</id>
+        <label>IPv6 Address</label>
+        <type>text</type>
+        <help>Set the IPv6 address the user should receive.</help>
+    </field>
+    <field>
+        <id>user.vlan</id>
+        <label>VLAN ID</label>
+        <type>text</type>
+        <help>VLAN ID the user receives, e.g. for 802.1X. Leave empty if you don't know what it is.</help>
+    </field>
+    <field>
+        <id>user.mikrotik</id>
+        <label>Mikrotik VLAN</label>
+        <type>mikrotik</type>
+        <advanced>true</advanced>
+        <help>Set the Mikrotik VLAN ID and type attribute. Mikrotik uses own attributes for VLAN assignment and for VLAN type use a value of 0 is fine.</help>
+    </field>    
+    <field>
+        <id>user.wispr</id>
+        <label>WISPr Bandwidth</label>
+        <type>wispr</type>
+        <advanced>true</advanced>
+        <help>Set the Bandwidth for WISPr attribute. The value is treated as bits/s.</help>
+    </field>   
+    <field>
+        <id>user.chillispot</id>
+        <label>ChilliSpot Bandwidth</label>
+        <type>chillispot</type>
+        <advanced>true</advanced>
+        <help>Set the Bandwidth for ChilliSpot attribute. The value is treated as kbits/s.</help>
+    </field>    
+    <field>
+        <id>user.logintime</id>
+        <label>Login Time</label>
+        <type>logintime</type>
+        <advanced>true</advanced>
+        <help>Set the Login-Time. This can be used by the Captive Portal.</help>
+    </field>          
+    <field>
+        <id>user.sessionlimit</id>
+        <label>Max Daily Session</label>
+        <type>sessionlimit</type>
+        <advanced>true</advanced>
+        <help>Set the maximum daily session limit. This can be used by the Captive Portal.</help>
+    </field>       
+</form>

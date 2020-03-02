@@ -1,0 +1,42 @@
+<model>
+    <mount>//OPNsense/freeradius/bandwidthrule</mount>
+    <description>FreeRADIUS bandwidthrule configuration</description>
+    <version>1.0.0</version>
+    <items>
+        <bandwidthrules>
+            <bandwidthrule type="ArrayField">
+                <enabled type="BooleanField">
+                    <default>1</default>
+                    <Required>Y</Required>
+                </enabled>    
+                <uploadbandwidth type="IntegerField">
+                    <Required>N</Required>
+                </uploadbandwidth>   
+                <uploadmetric type="OptionField">
+                    <OptionValues>
+                        <bit>bit/s</bit>
+                        <Kbit>Kbit/s</Kbit>
+                        <Mbit>Mbit/s</Mbit>
+                    </OptionValues>
+                    <Required>Y</Required>
+                    <Multiple>N</Multiple>                    
+                </uploadmetric>
+                <downloadbandwidth type="IntegerField">
+                    <Required>N</Required>
+                </downloadbandwidth>   
+                <downloadmetric type="OptionField">
+                    <OptionValues>
+                        <bit>bit/s</bit>
+                        <Kbit>Kbit/s</Kbit>
+                        <Mbit>Mbit/s</Mbit>
+                    </OptionValues>
+                    <Required>Y</Required>
+                    <Multiple>N</Multiple>                    
+                </downloadmetric>                
+                <description type="TextField">
+                    <Required>N</Required>
+                </description>                            
+            </bandwidthrule>
+        </bandwidthrules>
+    </items>
+</model>

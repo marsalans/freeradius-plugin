@@ -1,0 +1,38 @@
+{% if helpers.exists('OPNsense.freeradius.general.bandwidthlimit') and OPNsense.freeradius.general.bandwidthlimit == '1' %}
+ATTRIBUTE       Max-Upload-Bandwidth         3001    integer
+ATTRIBUTE       Max-Upload-BandwidthMetric   3002    string
+ATTRIBUTE       Max-Download-Bandwidth       3003    integer
+ATTRIBUTE       Max-Download-BandwidthMetric 3004    string
+{% endif %}
+
+{% if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+ATTRIBUTE       Max-Hourly-Session           3005    integer
+ATTRIBUTE       Max-Daily-Session            3006    integer
+ATTRIBUTE       Max-Weekly-Session           3007    integer
+ATTRIBUTE       Max-Monthly-Session          3008    integer
+ATTRIBUTE       Max-Account-Session          3009    integer
+{% endif %}
+
+{% if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+ATTRIBUTE       Max-Hourly-Traffic           3010    integer
+ATTRIBUTE       Max-Daily-Traffic            3011    integer
+ATTRIBUTE       Max-Weekly-Traffic           3012    integer
+ATTRIBUTE       Max-Monthly-Traffic          3013    integer
+ATTRIBUTE       Max-Account-Traffic          3014    integer
+ATTRIBUTE       Traffic-Limit                3015    integer
+{% endif %}
+
+{% if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+ATTRIBUTE       Account-Start-Date           3016    string
+ATTRIBUTE       Account-End-Date             3017    string
+{% endif %}
+
+ATTRIBUTE       Beginning-Hourly-Time        3018    integer
+ATTRIBUTE       Beginning-Daily-Time         3019    integer
+ATTRIBUTE       Beginning-Weekly-Time        3020    integer
+ATTRIBUTE       Beginning-Monthly-Time       3021    integer
+     
+ATTRIBUTE       Script-Output                3022    string
+ATTRIBUTE       Query-Output                 3023    string
+ATTRIBUTE       UserGroup-Name               3024    string
+     

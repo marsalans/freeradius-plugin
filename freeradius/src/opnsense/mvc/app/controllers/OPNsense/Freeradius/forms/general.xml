@@ -1,0 +1,92 @@
+<form>
+    <field>
+        <id>general.enabled</id>
+        <label>Enable</label>
+        <type>checkbox</type>
+        <help>This will activate the FreeRADIUS service.</help>
+    </field>
+    <field>
+        <id>general.vlanassign</id>
+        <label>Enable VLAN assignment</label>
+        <type>checkbox</type>
+        <help>This allows you to dynamically assign VLANs on your physical switch ports.</help>
+    </field>
+    <field>
+        <id>general.ldap_enabled</id>
+        <label>Enable LDAP</label>
+        <type>checkbox</type>
+        <help>This allows you to bind to an external LDAP server. Be aware that FreeRADIUS will not start if there is no further configuration.</help>
+    </field>
+    <!-- <field>
+        <id>general.wispr</id>
+        <label>Enable WISPr attributes</label>
+        <type>checkbox</type>
+        <help>This enables the WISPr attributes assignment via users tab.</help>
+    </field>
+    <field>
+        <id>general.chillispot</id>
+        <label>Enable ChilliSpot attributes</label>
+        <type>checkbox</type>
+        <help>This enables the ChilliSpot attributes assignment via users tab.</help>
+    </field> -->
+    <field>
+        <id>general.mikrotik</id>
+        <label>Enable Mikrotik attributes</label>
+        <type>checkbox</type>
+        <help>This enables the Mikrotik attributes assignment via users tab.</help>
+    </field>
+    <field>
+        <id>general.sqlite</id>
+        <label>Enable SQLite</label>
+        <type>checkbox</type>
+        <help>This enables SQLite module and accounting.</help>
+    </field>
+    <field>
+        <id>general.logintime</id>
+        <label>Enable Login Time</label>
+        <type>checkbox</type>
+        <help>This enables the Login-Time attribute assignment via users tab. ex. Al0700-1800</help>
+    </field>  
+    <field>
+        <id>general.bandwidthlimit</id>
+        <label>Enable Bandwidth Limit</label>
+        <type>checkbox</type>
+        <help>This enables the Bandwidth limit assignment via bandwidth rules tab.</help>
+    </field>      
+    <field>
+        <id>general.sessionlimit</id>
+        <label>Enable Session Limit</label>
+        <type>checkbox</type>
+        <help>This enables the Max-Hourly-Session, Max-Daily-Session, Max-Weekly-Session, Max-Monthly-Session and Max-Account-Session attribute assignment via users tab.</help>
+    </field>
+    <field>
+        <id>general.trafficlimit</id>
+        <label>Enable Traffic Limit</label>
+        <type>checkbox</type>
+        <help>This enables the Max-Hourly-Traffic, Max-Daily-Traffic, Max-Weekly-Traffic, Max-Monthly-Traffic and Max-Account-Traffic attribute assignment via users tab.</help>
+    </field>    
+     <field>
+        <id>general.log_destination</id>
+        <label>Log to File or Syslog</label>
+        <type>dropdown</type>
+        <help>Set where to log radius requests, defaults to file.</help>
+    </field>
+     <field>
+        <id>general.log_authentication_request</id>
+        <label>Log Authentication Request</label>
+        <type>checkbox</type>
+        <help>Enable the logging of authentication requests, including MAC addresses.</help>
+    </field>
+     <field>
+        <id>general.log_authbadpass</id>
+        <label>Log Authentication Bad Password</label>
+        <type>checkbox</type>
+        <help>Logs password if it is rejected.</help>
+    </field>
+     <field>
+        <id>general.log_authgoodpass</id>
+        <label>Log Authentication Good Password</label>
+        <type>checkbox</type>
+        <help>Logs password if it is correct.</help>
+    </field>
+</form>

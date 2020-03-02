@@ -1,0 +1,131 @@
+{% if helpers.exists('OPNsense.freeradius.general.enabled') and OPNsense.freeradius.general.enabled == '1' %}
+{%   if helpers.exists('OPNsense.freeradius.user.users.user') %}
+{%     for user_list in helpers.toList('OPNsense.freeradius.user.users.user') %}
+{%       if user_list.enabled == '1' %}
+
+{{ user_list.username }}  Cleartext-Password := "{{ user_list.password }}"
+{%-      if user_list.simultaneous is defined -%}
+, Simultaneous-Use := {{ user_list.simultaneous }}
+{%-      endif %}
+{%       if user_list.authtype is defined -%}
+, Auth-Type := {{ user_list.authtype }}
+{%-      endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.sessionlimit') and OPNsense.freeradius.general.sessionlimit == '1' %}
+{%         if user_list.hourlysessionlimit is defined -%}
+, Max-Hourly-Session := {{ user_list.hourlysessionlimit }}
+{%-        endif %}
+{%         if user_list.dailysessionlimit is defined -%}
+, Max-Daily-Session := {{ user_list.dailysessionlimit }}
+{%-        endif %}
+{%         if user_list.weeklysessionlimit is defined -%}
+, Max-Weekly-Session := {{ user_list.weeklysessionlimit }}
+{%-        endif %}
+{%         if user_list.monthlysessionlimit is defined -%}
+, Max-Monthly-Session := {{ user_list.monthlysessionlimit }}
+{%-        endif %}
+{%         if user_list.accountsessionlimit is defined -%}
+, Max-Account-Session := {{ user_list.accountsessionlimit }}
+{%-        endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.trafficlimit') and OPNsense.freeradius.general.trafficlimit == '1' %}
+{%         if user_list.hourlytrafficlimit is defined -%}
+, Max-Hourly-Traffic := {{ user_list.hourlytrafficlimit }}
+{%-        endif %}
+{%         if user_list.dailytrafficlimit is defined -%}
+, Max-Daily-Traffic := {{ user_list.dailytrafficlimit }}
+{%-        endif %}
+{%         if user_list.weeklytrafficlimit is defined -%}
+, Max-Weekly-Traffic := {{ user_list.weeklytrafficlimit }}
+{%-        endif %}
+{%         if user_list.monthlytrafficlimit is defined -%}
+, Max-Monthly-Traffic := {{ user_list.monthlytrafficlimit }}
+{%-        endif %}
+{%         if user_list.accounttrafficlimit is defined -%}
+, Max-Account-Traffic := {{ user_list.accounttrafficlimit }}
+{%-        endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.logintime') and OPNsense.freeradius.general.logintime == '1' %}
+{%         if user_list.logintime_start_date is defined -%}
+, Account-Start-Date := "{{ user_list.logintime_start_date }}"
+{%-        endif %}
+{%         if user_list.logintime_end_date is defined -%}
+, Account-End-Date := "{{ user_list.logintime_end_date }}"
+{%-        endif %}
+{%         if user_list.logintime_value is defined -%}
+, Login-Time := "{{ user_list.logintime_value }}"
+{%         endif %}
+{%       endif %}
+
+{%       if user_list.idletimeout is defined %}
+       Idle-Timeout = {{ user_list.idletimeout }},
+{%       endif %}
+{%       if user_list.replymessage is defined %}
+       Reply-Message = "{{ user_list.replymessage }}",
+{%       endif %}
+{%       if user_list.ip is defined %}
+       Framed-IP-Address = {{ user_list.ip }},
+{%       endif %}
+{%       if user_list.subnet is defined %}
+       Framed-IP-Netmask = {{ user_list.subnet }},
+{%       endif %}
+{%       if user_list.route is defined %}
+{%         for network in user_list.route.split(',') %}
+       Framed-Route += "{{ network }}",
+{%         endfor %}
+{%       endif %}
+{%       if user_list.ip6 is defined %}
+       Framed-IPv6-Address = {{ user_list.ip6 }},
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.vlanassign') and OPNsense.freeradius.general.vlanassign == '1' %}
+{%         if user_list.vlan is defined %}
+       Tunnel-Type = VLAN,
+       Tunnel-Medium-Type = IEEE-802,
+       Tunnel-Private-Group-Id = {{ user_list.vlan }},
+{%         endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.mikrotik') and OPNsense.freeradius.general.mikrotik == '1' %}
+{%         if user_list.mikrotik_vlan_id_number is defined %}
+       Mikrotik-Wireless-VLANID = {{ user_list.mikrotik_vlan_id_number }},
+{%         endif %}
+{%         if user_list.mikrotik_vlan_id_type is defined %}
+       Mikrotik-Wireless-VLANID-Type = {{ user_list.mikrotik_vlan_id_type }},
+{%         endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.wispr') and OPNsense.freeradius.general.wispr == '1' %}
+{%         if user_list.wispr_bw_min_up is defined %}
+       WISPr-Bandwidth-Min-Up = {{ user_list.wispr_bw_min_up }},
+{%         endif %}
+{%         if user_list.wispr_bw_max_up is defined %}
+       WISPr-Bandwidth-Max-Up = {{ user_list.wispr_bw_max_up }},
+{%         endif %}
+{%         if user_list.wispr_bw_min_down is defined %}
+       WISPr-Bandwidth-Min-Down = {{ user_list.wispr_bw_min_down }},
+{%         endif %}
+{%         if user_list.wispr_bw_max_down is defined %}
+       WISPr-Bandwidth-Max-Down = {{ user_list.wispr_bw_max_down }},
+{%         endif %}
+{%       endif %}
+{%       if helpers.exists('OPNsense.freeradius.general.chillispot') and OPNsense.freeradius.general.chillispot == '1' %}
+{%         if user_list.chillispot_bw_max_up is defined %}
+       ChilliSpot-Bandwidth-Max-Up = {{ user_list.chillispot_bw_max_up }},
+{%         endif %}
+{%         if user_list.chillispot_bw_max_down is defined %}
+       ChilliSpot-Bandwidth-Max-Down = {{ user_list.chillispot_bw_max_down }},
+{%         endif %}
+{%       endif %}
+       Framed-Protocol = PPP  
+{%       endif %}
+{%     endfor %}
+{%   endif %}
+
+DEFAULT Framed-Protocol == PPP
+        Framed-Protocol = PPP,
+        Framed-Compression = Van-Jacobson-TCP-IP
+
+DEFAULT Hint == "CSLIP"
+        Framed-Protocol = SLIP,
+        Framed-Compression = Van-Jacobson-TCP-IP
+
+DEFAULT Hint == "SLIP"
+        Framed-Protocol = SLIP
+{% endif %}
